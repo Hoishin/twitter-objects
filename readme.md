@@ -2,7 +2,7 @@
 
 > TypeScript type definition for [Twitter API JSON](https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object.html)
 
-## Usage
+## Example
 
 ```ts
 import {TweetObject} from 'twitter-tweet-object'
