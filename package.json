@@ -1,0 +1,13 @@
+{
+  "name": "twitter-tweet-object",
+  "version": "0.1.0",
+  "description": "TypeScript type definition for Twitter's tweet object: https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object.html",
+  "main": " ",
+  "repository": "https://github.com/hoishin/twitter-tweet-object",
+  "author": "Keiichiro Amemiya",
+  "license": "MIT",
+  "devDependencies": {
+    "prettier": "^1.13.5",
+    "typescript": "^2.9.1"
+  }
+}
