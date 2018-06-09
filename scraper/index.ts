@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import TwitterObject, { TwitterObjectType } from './twitter-object';
+import TwitterObject, {TwitterObjectType} from './twitter-object';
 
 const fetchHtml = (category: string) =>
 	axios
@@ -26,13 +26,18 @@ const constructTweetObject = async () => {
 				)
 		);
 
-	const tweetObject = new TwitterObject(TwitterObjectType.TweetObject, 'An object that respresents a tweet')
-	tweetObject.addAttributes(...attributes, ...deprecatedAttributes)
-	console.log(tweetObject.toDefinition())
+	const tweetObject = new TwitterObject(
+		TwitterObjectType.TweetObject,
+		'An object that respresents a tweet'
+	);
+	tweetObject.addAttributes(...attributes, ...deprecatedAttributes).define();
 };
 
-const main = () => {
-	return Promise.all([constructTweetObject()])
+
+
+const main = async () => {
+	await Promise.all([constructTweetObject()]);
+	await TwitterObject.outputDefinitions()
 };
 
 main().catch(err => {

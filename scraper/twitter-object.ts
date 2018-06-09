@@ -1,3 +1,5 @@
+import {promisify} from 'util';
+import {writeFile} from 'fs';
 import * as Case from 'case';
 
 export const enum PrimitiveType {
@@ -28,9 +30,41 @@ interface Attribute {
 }
 
 export default class TwitterObject {
-	private _attr: Attribute[] = [];
+	private static definitions: string = '';
+
+	static outputDefinitions() {
+		return promisify(writeFile)(
+			`./types/index.ts`,
+			TwitterObject.definitions
+		);
+	}
+
+	private _attributes: Attribute[] = [];
 
 	constructor(private name: TwitterObjectType, private description: string) {}
+
+	addAttributes(...attributes: string[][]) {
+		for (const attribute of attributes) {
+			if (attribute.length !== 3) {
+				throw new Error(
+					`Invalid attribute object: ${JSON.stringify(attribute)}`
+				);
+			}
+			const typeName = this.formatType(attribute);
+			this._attributes.push({
+				key: attribute[0],
+				optional: true, // TODO: Analise description to determine if it is really optional
+				type: typeName,
+				description: attribute[2].replace(/[\n\ ]+/g, ' ').trim(),
+			});
+		}
+		return this;
+	}
+
+	define() {
+		TwitterObject.definitions += this.toDefinition();
+		return this;
+	}
 
 	/**
 	 * Convert raw type strings from API documents to TypeScript-defined types
@@ -38,8 +72,12 @@ export default class TwitterObject {
 	 */
 	private formatType([key, rawType]: string[]): AttributeType {
 		// Exceptions
-		if (this.name === TwitterObjectType.TweetObject && key === 'geo' && rawType === 'Object') {
-			return TwitterObjectType.CoordinatesObject
+		if (
+			this.name === TwitterObjectType.TweetObject &&
+			key === 'geo' &&
+			rawType === 'Object'
+		) {
+			return TwitterObjectType.CoordinatesObject;
 		}
 		switch (Case.lower(rawType)) {
 			// Primitive types
@@ -70,26 +108,12 @@ export default class TwitterObject {
 
 			// Runtime error for non-recognized type string
 			default:
-				throw new Error(`Error during scraping: Unrecognized type: ${rawType}`);
+				throw new Error(`Unrecognized type: ${rawType}`);
 		}
 	}
 
-	addAttributes(...attributes: string[][]) {
-		for (const attribute of attributes) {
-			if (attribute.length !== 3) {
-				throw new Error(`Error during scraping: Invalid attribute object: ${JSON.stringify(attribute)}`)
-			}
-			this._attr.push({
-				key: attribute[0],
-				optional: true, // TODO: Analise description to determine if it is really optional
-				type: this.formatType(attribute),
-				description: attribute[2].trim().replace(/[\n\ ]+/g, ' '),
-			});
-		}
-	}
-
-	toDefinition() {
-		const attributeString = this._attr.reduce(
+	private toDefinition() {
+		const attributeString = this._attributes.reduce(
 			(prev, {key, optional, type, description}) => {
 				const optionalMark = optional ? '?' : '';
 
@@ -107,7 +131,7 @@ export default class TwitterObject {
 /**
  * ${this.description}
  */
-export interface ${Case.pascal(this.name)}Object {
+export interface ${this.name} {
 ${attributeString}
 }
 `;
