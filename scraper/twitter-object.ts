@@ -30,7 +30,7 @@ interface Attribute {
 export default class TwitterObject {
 	private _attr: Attribute[] = [];
 
-	constructor(private name: string, private description: string) {}
+	constructor(private name: TwitterObjectType, private description: string) {}
 
 	/**
 	 * Convert raw type strings from API documents to TypeScript-defined types
