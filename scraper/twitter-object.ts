@@ -1,12 +1,12 @@
 import * as Case from 'case';
 
-const enum PrimitiveType {
+export const enum PrimitiveType {
 	String = 'string',
 	Number = 'number',
 	Boolean = 'boolean',
 }
 
-const enum TwitterObjectType {
+export const enum TwitterObjectType {
 	TweetObject = 'TweetObject',
 	UserObject = 'UserObject',
 	EntitiesObject = 'EntitiesObject',
@@ -18,7 +18,7 @@ const enum TwitterObjectType {
 	RuleObjectArray = 'RuleObject[]',
 }
 
-type AttributeType = PrimitiveType | TwitterObjectType;
+export type AttributeType = PrimitiveType | TwitterObjectType;
 
 interface Attribute {
 	key: string;
@@ -36,7 +36,11 @@ export default class TwitterObject {
 	 * Convert raw type strings from API documents to TypeScript-defined types
 	 * @param rawType {string}
 	 */
-	private formatType(rawType: string): AttributeType {
+	private formatType([key, rawType]: string[]): AttributeType {
+		// Exceptions
+		if (this.name === TwitterObjectType.TweetObject && key === 'geo' && rawType === 'Object') {
+			return TwitterObjectType.CoordinatesObject
+		}
 		switch (Case.lower(rawType)) {
 			// Primitive types
 			case 'string':
@@ -66,17 +70,20 @@ export default class TwitterObject {
 
 			// Runtime error for non-recognized type string
 			default:
-				throw new Error(`Unrecognized type: ${rawType}`);
+				throw new Error(`Error during scraping: Unrecognized type: ${rawType}`);
 		}
 	}
 
-	addAttributes(...attributes: [string, string, string][]) {
+	addAttributes(...attributes: string[][]) {
 		for (const attribute of attributes) {
+			if (attribute.length !== 3) {
+				throw new Error(`Error during scraping: Invalid attribute object: ${JSON.stringify(attribute)}`)
+			}
 			this._attr.push({
 				key: attribute[0],
 				optional: true, // TODO: Analise description to determine if it is really optional
-				type: this.formatType(attribute[1]),
-				description: attribute[2],
+				type: this.formatType(attribute),
+				description: attribute[2].trim().replace(/[\n\ ]+/g, ' '),
 			});
 		}
 	}
@@ -86,7 +93,7 @@ export default class TwitterObject {
 			(prev, {key, optional, type, description}) => {
 				const optionalMark = optional ? '?' : '';
 
-				return `${prev}\
+				return `${prev}
 	/**
 	 * ${description}
 	 */

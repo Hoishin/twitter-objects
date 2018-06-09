@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import TwitterObject, { TwitterObjectType } from './twitter-object';
 
 const fetchHtml = (category: string) =>
 	axios
@@ -8,15 +9,15 @@ const fetchHtml = (category: string) =>
 		)
 		.then(res => cheerio.load(res.data));
 
-const tweetObject = async () => {
+const constructTweetObject = async () => {
 	const $ = await fetchHtml('tweet');
-	const hoge = $('table.docutils > tbody')
+	const [attributes, deprecatedAttributes] = $('table.docutils > tbody')
 		.toArray()
 		.map(table =>
 			$(table)
 				.children('tr')
-				.slice(1)
 				.toArray()
+				.slice(1)
 				.map(tr =>
 					$(tr)
 						.children()
@@ -24,12 +25,14 @@ const tweetObject = async () => {
 						.map(th => $(th).text())
 				)
 		);
-	console.log(hoge);
-	console.log(hoge[0].map(attr => attr[1]));
+
+	const tweetObject = new TwitterObject(TwitterObjectType.TweetObject, 'An object that respresents a tweet')
+	tweetObject.addAttributes(...attributes, ...deprecatedAttributes)
+	console.log(tweetObject.toDefinition())
 };
 
 const main = () => {
-	return Promise.all([tweetObject()]);
+	return Promise.all([constructTweetObject()])
 };
 
 main().catch(err => {
