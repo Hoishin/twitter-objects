@@ -1,11 +1,11 @@
-# twitter-tweet-object
+# twitter-objects
 
-> TypeScript type definition for Twitter's [tweet object](https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object.html)
+> TypeScript type definition for [Twitter API JSON](https://developer.twitter.com/en/docs/tweets/data-dictionary/overview/tweet-object.html)
 
 ## Usage
 
 ```ts
-import TweetObject from 'twitter-tweet-object'
+import {TweetObject} from 'twitter-tweet-object'
 
 export class Tweet {
 	constructor(public tweet: TweetObject) {}
@@ -15,3 +15,7 @@ export class Tweet {
 	}
 }
 ```
+
+## API
+
+(WIP)
