@@ -6,9 +6,14 @@ export const enum PrimitiveType {
 	String = 'string',
 	Number = 'number',
 	Boolean = 'boolean',
+	Object = 'object',
+	Null = 'null',
+	StringArray = 'string[]',
+	ObjectArray = 'object[]',
 }
 
 export const enum TwitterObjectType {
+	// Scraped
 	TweetObject = 'TweetObject',
 	UserObject = 'UserObject',
 	EntitiesObject = 'EntitiesObject',
@@ -16,8 +21,6 @@ export const enum TwitterObjectType {
 	PlaceObject = 'PlaceObject',
 	CoordinatesObject = 'CoordinatesObject',
 	BoundingBoxObject = 'BoundingBoxObject',
-	RuleObject = 'RuleObject',
-	RuleObjectArray = 'RuleObject[]',
 }
 
 export type AttributeType = PrimitiveType | TwitterObjectType;
@@ -51,12 +54,14 @@ export default class TwitterObject {
 				);
 			}
 			const typeName = this.formatType(attribute);
-			this._attributes.push({
-				key: attribute[0],
-				optional: true, // TODO: Analise description to determine if it is really optional
-				type: typeName,
-				description: attribute[2].replace(/[\n\ ]+/g, ' ').trim(),
-			});
+			if (typeName) {
+				this._attributes.push({
+					key: attribute[0].replace(/[\n\ ]+/g, '').trim(),
+					optional: true, // TODO: Analise description to determine if it is really optional
+					type: typeName,
+					description: attribute[2].replace(/[\n\ ]+/g, ' ').trim(),
+				});
+			}
 		}
 		return this;
 	}
@@ -70,16 +75,8 @@ export default class TwitterObject {
 	 * Convert raw type strings from API documents to TypeScript-defined types
 	 * @param rawType {string}
 	 */
-	private formatType([key, rawType]: string[]): AttributeType {
-		// Exceptions
-		if (
-			this.name === TwitterObjectType.TweetObject &&
-			key === 'geo' &&
-			rawType === 'Object'
-		) {
-			return TwitterObjectType.CoordinatesObject;
-		}
-		switch (Case.lower(rawType)) {
+	private formatType([key, rawType]: string[]): AttributeType | void {
+		switch (Case.lower(rawType).trim()) {
 			// Primitive types
 			case 'string':
 				return PrimitiveType.String;
@@ -89,6 +86,14 @@ export default class TwitterObject {
 				return PrimitiveType.Number;
 			case 'boolean':
 				return PrimitiveType.Boolean;
+			case 'object':
+				return PrimitiveType.Object;
+			case 'null':
+				return PrimitiveType.Null;
+			case 'array of string':
+				return PrimitiveType.StringArray;
+			case 'array of rule objects':
+				return PrimitiveType.ObjectArray;
 
 			// Twitter-original object types
 			case 'tweet':
@@ -103,12 +108,9 @@ export default class TwitterObject {
 				return TwitterObjectType.CoordinatesObject;
 			case 'places':
 				return TwitterObjectType.PlaceObject;
-			case 'array of rule objects':
-				return TwitterObjectType.RuleObjectArray;
 
-			// Runtime error for non-recognized type string
 			default:
-				throw new Error(`Unrecognized type: ${rawType}`);
+				console.error(`Unrecognized type: ${rawType} (name: ${key})`);
 		}
 	}
 

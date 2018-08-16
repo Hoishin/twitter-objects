@@ -11,33 +11,42 @@ const fetchHtml = (category: string) =>
 
 const constructTweetObject = async () => {
 	const $ = await fetchHtml('tweet');
-	const [attributes, deprecatedAttributes] = $('table.docutils > tbody')
+	const attributes = $('table > tbody > tr')
 		.toArray()
-		.map(table =>
-			$(table)
-				.children('tr')
+		.map(tr =>
+			$(tr)
+				.children()
 				.toArray()
-				.slice(1)
-				.map(tr =>
-					$(tr)
-						.children()
-						.toArray()
-						.map(th => $(th).text())
-				)
+				.map(th => $(th).text().trim())
 		);
 
 	const tweetObject = new TwitterObject(
 		TwitterObjectType.TweetObject,
-		'An object that respresents a tweet'
+		'An object that represents a tweet'
 	);
-	tweetObject.addAttributes(...attributes, ...deprecatedAttributes).define();
+	tweetObject.addAttributes(...attributes).define();
 };
 
-
+const constructUserObject = async () => {
+	const $ = await fetchHtml('user');
+	const attributes = $('table > tbody > tr')
+		.toArray()
+		.map(tr =>
+			$(tr)
+				.children()
+				.toArray()
+				.map(th => $(th).text())
+		);
+	const userObject = new TwitterObject(
+		TwitterObjectType.TweetObject,
+		'An object that represents a user'
+	);
+	userObject.addAttributes(...attributes).define()
+};
 
 const main = async () => {
-	await Promise.all([constructTweetObject()]);
-	await TwitterObject.outputDefinitions()
+	await Promise.all([constructTweetObject(), constructUserObject()]);
+	await TwitterObject.outputDefinitions();
 };
 
 main().catch(err => {
